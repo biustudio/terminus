@@ -49,6 +49,9 @@ import { WindowsStockShellsProvider } from './shells/windowsStock'
 import { WSLShellProvider } from './shells/wsl'
 
 import { hterm } from './frontends/hterm'
+import { Frontend } from './frontends/frontend'
+import { HTermFrontend } from './frontends/htermFrontend'
+import { XTermFrontend } from './frontends/xtermFrontend'
 
 /** @hidden */
 @NgModule({
@@ -75,13 +78,13 @@ import { hterm } from './frontends/hterm'
         { provide: ShellProvider, useClass: MacOSDefaultShellProvider, multi: true },
         { provide: ShellProvider, useClass: LinuxDefaultShellProvider, multi: true },
         { provide: ShellProvider, useClass: WindowsStockShellsProvider, multi: true },
+        { provide: ShellProvider, useClass: PowerShellCoreShellProvider, multi: true },
         { provide: ShellProvider, useClass: CmderShellProvider, multi: true },
         { provide: ShellProvider, useClass: CustomShellProvider, multi: true },
         { provide: ShellProvider, useClass: Cygwin32ShellProvider, multi: true },
         { provide: ShellProvider, useClass: Cygwin64ShellProvider, multi: true },
         { provide: ShellProvider, useClass: GitBashShellProvider, multi: true },
         { provide: ShellProvider, useClass: POSIXShellsProvider, multi: true },
-        { provide: ShellProvider, useClass: PowerShellCoreShellProvider, multi: true },
         { provide: ShellProvider, useClass: WSLShellProvider, multi: true },
 
         { provide: TerminalContextMenuItemProvider, useClass: NewTabContextMenu, multi: true },
@@ -161,16 +164,9 @@ export default class TerminalModule {
             if (hotkey === 'new-window') {
                 hostApp.newWindow()
             }
-            if (hotkey.startsWith('shell.')) {
-                let shells = await terminal.shells$.toPromise()
-                let shell = shells.find(x => x.id === hotkey.split('.')[1])
-                if (shell) {
-                    terminal.openTab(shell)
-                }
-            }
             if (hotkey.startsWith('profile.')) {
-                let profiles = config.store.terminal.profiles
-                let profile = profiles.find(x => slug(x.name) === hotkey.split('.')[1])
+                let profiles = await config.store.terminal.getProfiles()
+                let profile = profiles.find(x => slug(x.name).toLowerCase() === hotkey.split('.')[1])
                 if (profile) {
                     terminal.openTabWithOptions(profile.sessionOptions)
                 }
@@ -188,9 +184,11 @@ export default class TerminalModule {
 
         hostApp.cliRunCommand$.subscribe(async command => {
             terminal.openTab({
-                id: '',
-                command: command[0],
-                args: command.slice(1),
+                name: '',
+                sessionOptions: {
+                    command: command[0],
+                    args: command.slice(1),
+                },
             }, null, true)
             hostApp.bringToFront()
         })
@@ -217,4 +215,5 @@ export default class TerminalModule {
 }
 
 export { TerminalService, BaseSession, TerminalTabComponent, TerminalFrontendService, BaseTerminalTabComponent }
+export { Frontend, XTermFrontend, HTermFrontend }
 export * from './api'

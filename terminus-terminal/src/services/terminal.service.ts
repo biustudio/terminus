@@ -1,8 +1,9 @@
 import * as fs from 'mz/fs'
+import slug from 'slug'
 import { Observable, AsyncSubject } from 'rxjs'
 import { Injectable, Inject } from '@angular/core'
 import { AppService, Logger, LogService, ConfigService, SplitTabComponent } from 'terminus-core'
-import { IShell, ShellProvider, SessionOptions } from '../api'
+import { IShell, ShellProvider, SessionOptions, Profile } from '../api'
 import { TerminalTabComponent } from '../components/terminalTab.component'
 import { UACService } from './uac.service'
 
@@ -37,6 +38,19 @@ export class TerminalService {
         return shellLists.reduce((a, b) => a.concat(b), [])
     }
 
+    async getProfiles (includeHidden?: boolean): Promise<Profile[]> {
+        let shells = await this.shells$.toPromise()
+        return [
+            ...this.config.store.terminal.profiles,
+            ...shells.filter(x => includeHidden || !x.hidden).map(shell => ({
+                name: shell.name,
+                icon: shell.icon,
+                sessionOptions: this.optionsFromShell(shell),
+                isBuiltin: true
+            }))
+        ]
+    }
+
     private async reloadShells () {
         this.shells = new AsyncSubject<IShell[]>()
         let shells = await this.getShells()
@@ -49,11 +63,19 @@ export class TerminalService {
      * Launches a new terminal with a specific shell and CWD
      * @param pause Wait for a keypress when the shell exits
      */
-    async openTab (shell?: IShell, cwd?: string, pause?: boolean): Promise<TerminalTabComponent> {
+    async openTab (profile?: Profile, cwd?: string, pause?: boolean): Promise<TerminalTabComponent> {
+        if (!profile) {
+            let profiles = await this.getProfiles(true)
+            profile = profiles.find(x => slug(x.name).toLowerCase() === this.config.store.terminal.profile) || profiles[0]
+        }
+
+        cwd = cwd || profile.sessionOptions.cwd
+
         if (cwd && !fs.existsSync(cwd)) {
             console.warn('Ignoring non-existent CWD:', cwd)
             cwd = null
         }
+
         if (!cwd) {
             if (this.app.activeTab instanceof TerminalTabComponent && this.app.activeTab.session) {
                 cwd = await this.app.activeTab.session.getWorkingDirectory()
@@ -68,14 +90,10 @@ export class TerminalService {
             cwd = cwd || this.config.store.terminal.workingDirectory
             cwd = cwd || null
         }
-        if (!shell) {
-            let shells = await this.shells$.toPromise()
-            shell = shells.find(x => x.id === this.config.store.terminal.shell) || shells[0]
-        }
 
-        this.logger.log(`Starting shell ${shell.name}`, shell)
+        this.logger.log(`Starting profile ${profile.name}`, profile)
         let sessionOptions = {
-            ...this.optionsFromShell(shell),
+            ...profile.sessionOptions,
             pauseAfterExit: pause,
             cwd,
         }

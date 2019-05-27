@@ -1,9 +1,8 @@
 import './lru'
 import { app, ipcMain, Menu } from 'electron'
-import electronDebug = require('electron-debug')
 import { parseArgs } from './cli'
 import { Application } from './app'
-if (process.platform === 'win32' && require('electron-squirrel-startup')) process.exit(0)
+import electronDebug = require('electron-debug')
 
 if (!process.env.TERMINUS_PLUGINS) {
     process.env.TERMINUS_PLUGINS = ''
@@ -44,7 +43,11 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 if (argv.d) {
-    electronDebug({ enabled: true, showDevTools: 'undocked' })
+    electronDebug({
+        isEnabled: true,
+        showDevTools: true,
+        devToolsMode: 'undocked'
+    })
 }
 
 app.on('ready', () => {

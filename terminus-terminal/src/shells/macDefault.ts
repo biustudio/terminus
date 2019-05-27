@@ -23,6 +23,8 @@ export class MacOSDefaultShellProvider extends ShellProvider {
             name: 'User default',
             command: shellEntry.split(' ')[1].trim(),
             args: ['--login'],
+            hidden: true,
+            env: {},
         }]
     }
 }

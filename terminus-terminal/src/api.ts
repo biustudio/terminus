@@ -1,3 +1,4 @@
+import { SafeHtml } from '@angular/platform-browser'
 import { BaseTerminalTabComponent } from './components/baseTerminalTab.component'
 
 /**
@@ -35,6 +36,8 @@ export interface SessionOptions {
 export interface Profile {
     name: string,
     sessionOptions: SessionOptions,
+    isBuiltin?: boolean
+    icon?: SafeHtml
 }
 
 export interface ITerminalColorScheme {
@@ -66,13 +69,20 @@ export interface IShell {
     name?: string
     command: string
     args?: string[]
-    env?: {[id: string]: string}
+    env: {[id: string]: string}
 
     /**
      * Base path to which shell's internal FS is relative
      * Currently used for WSL only
      */
     fsBase?: string
+
+    /**
+     * SVG icon
+     */
+    icon?: SafeHtml
+
+    hidden?: boolean
 }
 
 /**

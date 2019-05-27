@@ -1,7 +1,8 @@
 import psNode = require('ps-node')
-let nodePTY
 import * as fs from 'mz/fs'
 import * as os from 'os'
+import * as nodePTY from 'node-pty'
+
 import { Observable, Subject } from 'rxjs'
 import { first } from 'rxjs/operators'
 import { Injectable } from '@angular/core'
@@ -154,7 +155,6 @@ export class Session extends BaseSession {
         })
 
         this.pty.on('exit', () => {
-            console.log('session exit')
             if (this.pauseAfterExit) {
                 return
             } else if (this.open) {
@@ -163,7 +163,6 @@ export class Session extends BaseSession {
         })
 
         this.pty.on('close', () => {
-            console.log('session close')
             if (this.pauseAfterExit) {
                 this.emitOutput('\r\nPress any key to close\r\n')
             } else if (this.open) {
@@ -322,8 +321,7 @@ export class SessionsService {
     constructor (
         log: LogService,
     ) {
-        nodePTY = require('@terminus-term/node-pty')
-        nodePTY = require('../bufferizedPTY')(nodePTY)
+        require('../bufferizedPTY')(nodePTY)
         this.logger = log.create('sessions')
     }
 

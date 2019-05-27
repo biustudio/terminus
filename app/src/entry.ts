@@ -1,7 +1,8 @@
 import 'zone.js'
-import 'core-js/es7/reflect'
-import 'core-js/core/delay'
+import 'core-js/proposals/reflect-metadata'
 import 'rxjs'
+
+import isDev = require('electron-is-dev')
 
 import './global.scss'
 import './toastr.scss'
@@ -21,7 +22,7 @@ if (process.platform === 'win32') {
     process.env.HOME = process.env.HOMEDRIVE + process.env.HOMEPATH
 }
 
-if (require('electron-is-dev')) {
+if (isDev) {
     console.warn('Running in debug mode')
 } else {
     enableProdMode()
